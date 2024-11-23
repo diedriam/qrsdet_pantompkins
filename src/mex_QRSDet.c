@@ -175,7 +175,7 @@ void mexFunction(
 
 
 	 /* get pointer to input data */
-	 ptr_yin = mxGetPr(prhs[0]);
+	 ptr_yin = (short*) mxGetPr(prhs[0]);
 
      new_dims[1]=mrows;
      new_dims[0]=ncols;

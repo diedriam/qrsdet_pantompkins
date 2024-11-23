@@ -1,7 +1,7 @@
 % example how to use mex_QRSDET
 
 % add binary path
-addpath('.. filesep bin')
+addpath(['..' filesep 'bin'])
 
 fnecg= fullfile(pwd, "..","data", "ecg_int16_200Hz.dat");
 fid=fopen(fnecg, 'r');
