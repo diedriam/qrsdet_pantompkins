@@ -1,4 +1,4 @@
-# qrsdet Pan-Tompkins algorithm implementation standalone and for Matlab
+# qrsdet Pan-Tompkins algorithm implementation for standalone and for Matlab
 
 - old implementation but still runs
 - input must be 16 bit integer binary file or 16 bit matlab data.
