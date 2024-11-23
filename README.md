@@ -2,7 +2,7 @@
 
 - Input must be 16 bit integer binary file or 16 bit matlab data.
 - Best performance at 200Hz
-- QRSDet is implemented as loop but be modified for realtime application
+- QRSDet is implemented as loop but be can be modified for realtime application
 
 ## How to compile mex_qrsdet
 cd src
