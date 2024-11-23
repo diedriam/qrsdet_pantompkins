@@ -1,4 +1,4 @@
-# qrsdet Pan-Tompkins algorithm implementation
+# qrsdet Pan-Tompkins algorithm implementation standallone and for Matlab
 
 - Input must be 16 bit integer binary file or 16 bit matlab data.
 - Best performance at 200Hz
