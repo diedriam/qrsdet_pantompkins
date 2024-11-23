@@ -21,7 +21,7 @@ cd src
 make fqrsdet
 ```
 
-## Run test fqrsdet for fileprocessing:
+## Run test fqrsdet for file processing:
 ```
 ../bin/fqrsdet ../data/ecg_int16_200Hz.dat ../data/ecg_int16_200Hz.txt 250
 ```
