@@ -1,0 +1,41 @@
+
+Sample
+o
+|
+Input Sample Buffer ->
+1 2 3 ...filterlen/2......filterlen
+|                             |
+o--------------o--------------o.............o
+               |
+               o
+   Filter (Phaseshift filterlen/2)
+               |
+           FilterValue
+               |
+               o
+       Filtered Sample Buffer->
+               1 2 3 derivlen
+               |       |                          
+               o---o---o....................o
+                   |                   
+        Derivation and Squaring(Phaseshift 2)
+                   |
+                Deriv2 Value	       	  
+	           |  
+                   o
+                   Deriv2 Sample Buffer->
+	           1 2 3 4 5             movwindowlen
+	           o-------------o-----------o
+                                 |
+	                         o
+	         Moving Window Integration (Phaseshift:movwindowlen/2)
+                                 |
+                                 o
+             Energy Signal (Phaseshift=filterlen+derivlen+movelen)
+                                                         
+                                                         
+ Min depth of    Input Sample Buffer: filterlen+derivlen+movwindowlen
+ Min depth of Filtered Sample Buffer:           derivlen+movwindowlen
+ Min depth of Deriv2 Sample Buffer:                      movwindowlen
+	       					   	       					   
+	       
