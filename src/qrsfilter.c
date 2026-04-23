@@ -79,7 +79,7 @@ int FWidth;
 int FiltT;
 #endif
 {
-register int i;
+ int i;
      if (fp > 0)
      for(i = 0; i < FWidth; i++)
 	*Hlow++ = sin(2.0*Pi*fp*(i-0.5*(FWidth-1)))
@@ -112,7 +112,7 @@ int FWidth;
 int FiltT;
 #endif
 {
-register int i;
+int i;
 float f0, fp;
 
   f0 = (lowfreq+highfreq)/2;

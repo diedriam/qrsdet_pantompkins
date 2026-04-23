@@ -37,7 +37,7 @@ int	Sign(int value)
 
 void Clear(char* a, int size)
 {
-register int i;
+ int i;
 
 	for (i=0; i< size; i++)
 		*(a++) = 0;
@@ -52,7 +52,7 @@ register int i;
 
 void MoveLong(long* b, int size)
 {
-register int i;
+ int i;
 	for (i=size-1; i>0; i--)
 		*(b+i)=*(b+i-1);
 }
@@ -65,7 +65,7 @@ register int i;
 
 void	MoveShort(short* b, int size)
 {
-register int i;
+ int i;
 	for (i=size-1; i>0; i--)
 		*(b+i)=*(b+i-1);
 }
@@ -88,7 +88,7 @@ short NextSampleValue(void)
  --------------------------------------------------------------------*/
 short NextFiltValue(void)
 {
-register int i;
+ int i;
 float filtvalue = 0.;
 
     /* run filter */
@@ -396,7 +396,7 @@ unsigned long iStop;
     #define nmed 5
     short npkimin[nmed], npkimax[nmed];
     short npkfmin[nmed], npkfmax[nmed];
-	register int i, ii;
+	 int i, ii;
     short data[7]={1,2,3,14,15,16,20};
     short help;
 
