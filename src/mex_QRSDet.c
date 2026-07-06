@@ -10,47 +10,16 @@
 
 
 #include "mex.h"
-#include "math.h"
-
-#include "stdio.h"
-
-#define ANSI_C
-
-#ifndef ANSI_C
-	#define SEEK_SET 0
-	#define SEEK_CUR 1
-	#define SEEK_END 2
-#endif
-
-
-#define DEBUG 1
-//#undef DEBUG
+#include <math.h>
+#include <stdio.h>
 
 #include "qrsdet.h"
-
-#include "qrsfilter.c"
-
-/*--------------------------------------------------------------------
-    GetSample
-	Get a new sample from input file
---------------------------------------------------------------------*/
+#include "qrsfilter.h"
 
 short *ptr_yin;
-double *ptr_yqrsout, *ptr_y, *ptr_fy, *ptr_dy, *ptrdbl;
+double *ptr_yqrsout;
 
-double ymin, ymax, yscale;
-
-long indx,epsilon, ii;	//for search maxima in raw signal;
-
-
-/* for reallocation */
-int new_dims[2];
-
-
-/*--------------------------------------------------------------------
-    GetSample
-	Get a new sample from input file
---------------------------------------------------------------------*/
+long indx, epsilon;	//for search maxima in raw signal;
 
 double ntotal;
 long waitbar_step;
@@ -68,7 +37,6 @@ short GetSample(void)
 		mexCallMATLAB(1,&mxwaitbar_handle,1, &mxwaitbar_index, "waitbar");
     }
 
-	//return (short) (((*(ptr_yin+iNrSample++))-ymin)*yscale );
 	return (short) (*(ptr_yin+iNrSample++));
 }
 
@@ -78,19 +46,6 @@ short GetSample(void)
 ----------------------------------------------------------------------*/
 void	PutRRRes(RRMsgForm RRRes)
 {
-	// binary
-	//	fwrite(&RRRes, sizeof(RRRes), 1, RRFile);
-
-	/* output in ASCII Time format in ms
-	fprintf(RRFile,"%ld\t%ld\t%d\n",
-	   (RRRes.iNr*1000L)/(long)SampleFreq,
-	   (RRRes.RRI*1000L)/(long)SampleFreq,
-	   RRRes.Test);*/
-
-	/* output in ASCII format (sampleunits)
-       fprintf(RRFile,"%ld\t%ld\t%d\n",
-	   RRRes.iNr, RRRes.RRI, RRRes.Test); */
-
 	/* find next maxima in the unfiltered ecg */
 
 	double ymax= *(ptr_yin+RRRes.iNr);
@@ -110,8 +65,6 @@ void	PutRRRes(RRMsgForm RRRes)
 }
 
 /*--------------------------------------------------------------------*/
-
-#include "qrsdet.c"
 
 /*--------------------------------------------------------------------
 
@@ -177,28 +130,11 @@ void mexFunction(
 	 /* get pointer to input data */
 	 ptr_yin = (short*) mxGetPr(prhs[0]);
 
-     new_dims[1]=mrows;
-     new_dims[0]=ncols;
-
 	 plhs[0] = mxCreateDoubleMatrix(mrows, ncols, mxREAL);
 	 ptr_yqrsout = mxGetPr(plhs[0]);
      if (ptr_yqrsout == NULL) mexErrMsgTxt("error: unable to create output array.");
 
-	/* find min/max to convert to short 
-	ymax= *(ptr_yin);
-	ymin= *(ptr_yin);
-
-	ptrdbl = ptr_yin;
-		for (ii=0;ii<mrows;ii++) {
-			if (*(ptrdbl) > ymax) ymax= *(ptrdbl);
-				else if ( *(ptrdbl) < ymin) ymin= *(ptrdbl);
-				ptrdbl++;
-		}
-		//if (ymax != ymin) yscale=4096./(ymax-ymin); else yscale=1.;
-		//if (ymax != ymin) yscale=32000./(ymax-ymin); else yscale=1.;
-    */
-
-    // init QRS 
+    // init QRS
     InitQRS();
     iNrSample=0;
     // qrsdet loops through for mrows- epsilon samples
@@ -208,14 +144,11 @@ void mexFunction(
 
 
 	 // reallocate (shrink) RR vector;
-     // remember we allocated same size as input signal 
+     // remember we allocated same size as input signal
 	 // limit size to number of samples found == last indx
-	 new_dims[0]=1;
-	 new_dims[1]=indx;
      mxSetM(plhs[0], indx);
  mexCallMATLAB(0,NULL,1, &mxwaitbar_handle, "close");
 
-  } //else
-//    _exit:   ;
+  }
 
 }

@@ -1,40 +1,18 @@
 /*----------------------------------------------------------------------
-    filter.c
-	include file for filter
-	version 1.0
+    qrsfilter.c
+	filter coefficient calculation
 ----------------------------------------------------------------------*/
 
-#define Rectangular		1
-#define Hanning			2
-#define Hamming			3
-#define Blackman		4
+#include <math.h>
+
+#include "qrsfilter.h"
 
 double Pi=3.14159265358979;
-
-#ifdef ANSI_C
-float calcw(int n, int FiltWidth, int FiltType);
-void calcfiltlow(float *Hlow, float fp, int FWidth, int FiltT);
-void calcfiltband(float *Hband, float lowfreq, float highfreq, int FWidth, int FiltT);
-#endif
-#ifndef ANSI_C
-float calcw();
-void calcfiltlow();
-void calcfiltband();
-#endif
-
 
 /*---------------------------------------------------------------------
 	   calculating the window function for the filter
 -----------------------------------------------------------------------*/
-#ifdef ANSI_C
 float calcw(int n, int FiltWidth, int FiltType)
-#endif
-#ifndef ANSI_C
-float calcw(n, FiltWidth, FiltType)
-int n;
-int FiltWidth;
-int FiltType;
-#endif
 {
 float w = 0.;
 
@@ -68,16 +46,7 @@ float w = 0.;
 		 3 Hamming     -41 dB
 		 4 Blackman    -57 dB
 ----------------------------------------------------------------------*/
-#ifdef ANSI_C
 void calcfiltlow(float *Hlow, float fp, int FWidth, int FiltT)
-#endif
-#ifndef ANSI_C
-void calcfiltlow(Hlow, fp, FWidth, FiltT)
-float *Hlow;
-float fp;
-int FWidth;
-int FiltT;
-#endif
 {
  int i;
      if (fp > 0)
@@ -99,18 +68,8 @@ int FiltT;
     lowfreq      normalized low freqency (LFreq/SFreq)
     highfreq     normalized high frequency (HFreq/SFreq)
 ----------------------------------------------------------------------*/
-#ifdef ANSI_C
 void calcfiltband(float *Hband, float lowfreq, float highfreq,
 	int FWidth, int FiltT)
-#endif
-#ifndef ANSI_C
-void calcfiltband(Hband, lowfreq, highfreq, FWidth, FiltT)
-float *Hband;
-float lowfreq;
-float highfreq;
-int FWidth;
-int FiltT;
-#endif
 {
 int i;
 float f0, fp;

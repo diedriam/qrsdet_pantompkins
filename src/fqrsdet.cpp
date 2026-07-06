@@ -1,40 +1,20 @@
 // FQRSDET.cpp : Defines the entry point for the console application.
 //
 
-//#include "stdafx.h"
-#include "math.h"
-#include "stdio.h"
-
-#define ANSI_C
-
-#ifndef ANSI_C
-	#define SEEK_SET 0
-	#define SEEK_CUR 1
-	#define SEEK_END 2
-#endif
+#include <cstdio>
 
 #include "qrsdet.h"
-#include "qrsfilter.c"
-#include "dataio.c"
-#include "qrsdet.c"
+#include "qrsfilter.h"
+#include "dataio.h"
 
 /*--------------------------------------------------------------------*/
 #define  ProgramTitel	"fqrsdet"
 /*--------------------------------------------------------------------*/
 
-
-#ifdef ANSI_C
 int main (int argc, char *argv[])
-#endif
-#ifndef ANSI_C
-main (argc, argv)
-	int 	argc;
-	char *argv[];
-#endif
 {
 	/* set sample freq */
-	SampleFreq=250;	
-	char	line[80];
+	SampleFreq=250;
     long	epochstart, epochstop, MaxNrEpoch;
 
     printf("\n\nSTANDALONE  %s\n", ProgramTitel);
@@ -69,15 +49,12 @@ main (argc, argv)
    // uses qrsdata where io routines for get and put data are defined
    QRSDet(epochstart*SampleFreq*60, (epochstop+1)*SampleFreq*60);
 			
-	// close files 
+	// close files
 	fclose(SourceFile);
 	fclose(RRFile);
 
-	// clean up	buffers
-	if (LastIn != NULL) delete [] LastIn;
-	if (LastFilt != NULL) delete [] LastFilt;
-	if (LastDiff2 != NULL) delete [] LastDiff2;
-	if (filtcoef != NULL) delete [] filtcoef;
+	// clean up buffers
+	CloseQRS();
 
 	printf("\nEnd of program.\n");
 	

@@ -1,16 +1,10 @@
 /*----------------------------------------------------------------------
-	dataio
+	dataio.c
 	specific routines for data reading and
 	specific routine for output of RRResult;
 ----------------------------------------------------------------------*/
-int		ReadBlock(long iblocknr);
-long	GetMaxNrSample(void);
-void	ReadSample(long index, short* channel);
 
-short	GetSample(void);
-void	PutRRRes(RRMsgForm RRRes);
-
-/*--------------------------------------------------------------------*/
+#include "dataio.h"
 
 FILE	*SourceFile, *RRFile;
 long	actblocknr=-1;
@@ -35,28 +29,24 @@ short	buf[256];
 int	ReadBlock(long iblocknr, int signalnumber)
 {
 	long	loffset;
-	int	i, nelement = 1;
+	int	i;
 	long idx;
-	unsigned char	bytebuf[DATABLOCKSIZE]; 
-	unsigned char	*ptr_bytebuf, *ptr_help= bytebuf;
+	unsigned char	bytebuf[DATABLOCKSIZE];
 	short 	*ptr_buf = buf;
 
 	loffset = (long) iblocknr;
 	loffset*= DATABLOCKSIZE;
 	if ((fseek(SourceFile, loffset+DATAFIRSTSKIP, SEEK_SET)) == -1) return -1;
-	
-	nelement = fread(bytebuf, sizeof(bytebuf), 1, SourceFile);
-	if (nelement <1)  return -1;
+
+	if (fread(bytebuf, sizeof(bytebuf), 1, SourceFile) < 1) return -1;
 
 	for (i=0; i<SAMPLESPERBLK; i++)
 	{
 		idx = 2*(i*MAXCHANNEL+signalnumber);
-		//*ptr_buf++ = bytebuf[idx]+
-		// 	256*bytebuf[idx+1];
 		*ptr_buf++ = bytebuf[idx] + (short)(bytebuf[idx+1]<<8);
 	}
 	actblocknr = iblocknr;
-	return nelement/2;
+	return SAMPLESPERBLK;
 }
 
 /*----------------------------------------------------------------------
@@ -72,9 +62,9 @@ long nbytes;
 }
 
 /*--------------------------------------------------------------------
-   GetSample
-	get a sample of channel 1 & 2
-	index nr. of sample in file
+   ReadSample
+	get one sample of the given channel by absolute sample index,
+	reading a new block only when the index crosses a block boundary
 --------------------------------------------------------------------*/
 void ReadSample(long index, int channelnumber, short* channel)
 {
@@ -89,17 +79,13 @@ int	i;
 
 /*--------------------------------------------------------------------
     GetSample
-	Get a new sample from input file
-	summe of channel 1 and 2
-	inversion of the result		 -(ch1+ch2)/2
-	store the last sample in temporary input buffer LastIn
+	Get the next sample from the source file (single-channel format,
+	MAXCHANNEL is 1, so the channel index is 0) and advance iNrSample
 --------------------------------------------------------------------*/
-
 short GetSample(void)
 {
 short ch;
-	// read channel 1
-	ReadSample(iNrSample++, 1, &ch);
+	ReadSample(iNrSample++, 0, &ch);
 	return ch;
 }
 
@@ -108,16 +94,7 @@ short ch;
 ----------------------------------------------------------------------*/
 void	PutRRRes(RRMsgForm RRRes)
 {
-	// binary
-	//	fwrite(&RRRes, sizeof(RRRes), 1, RRFile);
-
-	/* output in ASCII Time format in ms
-	fprintf(RRFile,"%ld\t%ld\t%d\n",
-	   (RRRes.iNr*1000L)/(long)SampleFreq,
-	   (RRRes.RRI*1000L)/(long)SampleFreq,
-	   RRRes.Test);*/
-
-	/* output in ASCII format (sampleunits)*/
+	/* output in ASCII format (sample units) */
 	// todo find out where the offset -20 comes from
 	fprintf(RRFile,"%ld\t%ld\t%d\n",
 	   RRRes.iNr-20, RRRes.RRI, RRRes.Test);

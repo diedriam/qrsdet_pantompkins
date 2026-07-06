@@ -8,13 +8,8 @@
 %
 %% compile
 
-if ispc
-    display('compiling mex_QRSDet.c...');
-    mex mex_QRSDet.c -output ../bin/mex_QRSDet
-else
-    display('compiling mex_QRSDet.c...');
-    mex mex_QRSDet.c -output ../bin/mex_QRSDet
-end 
+display('compiling mex_QRSDet.c...');
+mex mex_QRSDet.c qrsdet.c qrsfilter.c -output ../bin/mex_QRSDet
 
 display('compilation done.');
 display('usage:');

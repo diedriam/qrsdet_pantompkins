@@ -11,10 +11,72 @@
 // OPENTASK: optimize filters for different sample frequency
 //
 // Reference:
-// J. Pan and W. J. Tompkins, "A Real-Time QRS Detection Algorithm," 
-// IEEE Transactions on Biomedical Engineering, vol. BME-32, no. 3, pp. 230-236, 
-// March 1985, doi: 10.1109/TBME.1985.325532. 
+// J. Pan and W. J. Tompkins, "A Real-Time QRS Detection Algorithm,"
+// IEEE Transactions on Biomedical Engineering, vol. BME-32, no. 3, pp. 230-236,
+// March 1985, doi: 10.1109/TBME.1985.325532.
 
+#include <stdlib.h>
+
+#include "qrsdet.h"
+#include "qrsfilter.h"
+
+/*----------------------------------------------------------------------
+	Variables for QRS detection
+----------------------------------------------------------------------*/
+int T200ms;
+int T500ms;
+
+double SampleFreq;
+
+float	PrLowLimit;
+float	PrHighLimit;
+float	PrMissedLimit;
+
+int FILTERLEN;
+int MOVEWINDOWLEN;
+int FILTDELAY;
+int DERIVDELAY;
+int INTEGRDELAY;
+int DERIVINTEGRDELAY;
+int TOTALDELAY;
+
+int nlastin;
+int nlastfilt;
+int nlastdiff2;
+
+short*	LastIn = NULL;
+short*	LastFilt = NULL;
+short*	LastDiff2 = NULL;
+float*	filtcoef = NULL;
+
+unsigned long	iNrSample = 0L;
+short	SignalValue, FiltValue, Diff2Value, EnergyValue;
+
+long	LastRR[8], LastRROk[8];
+float	RRAverage1;
+float	RRAverage2;
+float	RRLowLimit, RRHighLimit, RRMissedLimit;
+int		countRRAverage1;
+
+long	RRPeak;
+long	iRRPeak, iLastOut;
+long	lastfxIsign, fxIsign, lastfxFsign, fxFsign;
+long	iLocMaxF, iLocMaxI, ixLocMaxF, ixLocMaxI;
+long	distance;
+
+short	LocMaxI, LocMaxF, xLocMaxF, xLocMaxI;
+
+short	FlgI, FlgF, xFlgI, xFlgF, FlgAboveThresI, LastFlgAboveThresI;
+int		ifound;
+
+short	fxI, lastfxI, fxF, lastfxF;
+
+float	ThresholdI1, ThresholdI2;
+float	NPKI;
+float	SPKI;
+float	ThresholdF1, ThresholdF2;
+float	NPKF;
+float	SPKF;
 
 /*----------------------------------------------------------------------
 	Nonspecific Routines for Data Manipulation
@@ -164,12 +226,7 @@ void OneStep(void)
        update the limit for RR-Interval range
 --------------------------------------------------------------------*/
 
-#ifdef ANSI_C
 void UpdateRRLimit(void)
-#endif
-#ifndef ANSI_C
-void UpdateRRLimit()
-#endif
 {
 RRLowLimit    = PrLowLimit * RRAverage2;	// Pan Tompkins:  .92 
 RRHighLimit   = PrHighLimit * RRAverage2;	// Pan Tompkins: 1.16 
@@ -180,13 +237,7 @@ RRMissedLimit = PrMissedLimit * RRAverage2; // Pan Tompkins: 1.66
 /*--------------------------------------------------------------------
        function RRLimitest
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 int RRLimitTest(unsigned long RR)
-#endif
-#ifndef ANSI_C
-int RRLimitTest(RR)
-unsigned long RR;
-#endif
 {
 return( ((RR>RRLowLimit) && (RR<RRHighLimit))? 1: 0);
 }
@@ -195,13 +246,7 @@ return( ((RR>RRLowLimit) && (RR<RRHighLimit))? 1: 0);
 /*--------------------------------------------------------------------
 	   function RRNormlimitTest HR 30-300 1/min
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 int RRNormTest(unsigned long RR)
-#endif
-#ifndef ANSI_C
-int RRNormTest(RR)
-unsigned long RR;
-#endif
 {
 return( ((RR>T200ms) && (RR<T500ms))? 1: 0);
 }
@@ -211,13 +256,7 @@ return( ((RR>T200ms) && (RR<T500ms))? 1: 0);
        procedure UpdateRRAverage(RR)
        update the limit for RR-Interval range
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void UpdateRRAverage(unsigned long RR)
-#endif
-#ifndef ANSI_C
-void UpdateRRAverage(RR)
-unsigned long RR;
-#endif
 {
 int i;
 
@@ -244,12 +283,7 @@ int i;
 	initialization of QRS-filter and other coefficients for QRSDet
 
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void InitQRS(void)
-#endif
-#ifndef ANSI_C
-void InitQRS()
-#endif
 {
 
 	/* for buffer system */
@@ -315,12 +349,7 @@ void InitQRS()
 	close: deallocate all dynamic buffers
 
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void CloseQRS(void)
-#endif
-#ifndef ANSI_C
-void CloseQRS()
-#endif
 {
 		if (LastIn != NULL)  free(LastIn);
         LastIn=NULL;
@@ -336,12 +365,7 @@ void CloseQRS()
 /*--------------------------------------------------------------------
 	initialiazation of RR-Analyse
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void InitPhase1(void)
-#endif
-#ifndef ANSI_C
-void InitPhase1()
-#endif
 {
 	fxIsign = fxFsign = -1; fxI = fxF = 0;
 	NPKI = NPKF =  99999.0; SPKI = SPKF = -99999.0;
@@ -372,7 +396,6 @@ short   MedianCeil(short input, short* history, int len)
     //nmed must be odd and greater than 2
     int i=0;
     int j;
-    int imed=len/2+1;
     if ( input > history[0] ){
         // is input smaller than shift from start
         while((input>history[i]) && (i++ < len-2));
@@ -385,25 +408,15 @@ short   MedianCeil(short input, short* history, int len)
 /*--------------------------------------------------------------------
 	Learnphase 1: Initialize thresholds
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void Phase1(unsigned long iStop)
-#endif
-#ifndef ANSI_C
-void Phase1(iStop)
-unsigned long iStop;
-#endif
 {
     #define nmed 5
-    short npkimin[nmed], npkimax[nmed];
-    short npkfmin[nmed], npkfmax[nmed];
+    short npkimax[nmed];
+    short npkfmax[nmed];
 	 int i, ii;
-    short data[7]={1,2,3,14,15,16,20};
-    short help;
 
     for (ii=0; ii<nmed;ii++) {
-        npkimin[ii]=9999.0;
         npkimax[ii]=-9999.0;
-        npkfmin[ii]=9999.0;
         npkfmax[ii]=-9999.0;
     }
 
@@ -434,7 +447,6 @@ unsigned long iStop;
         	   if (NPKF>fxF) NPKF=fxF;
 
         	   // store maximal value to signal level
-        	   //if (SPKF<fxF)
                    SPKF=fxF = MedianCeil(fxF,  npkfmax, nmed);
 
            }
@@ -451,7 +463,6 @@ unsigned long iStop;
     	   // store minimal value to noise level
            if (NPKI > fxI) NPKI = fxI;
        	   // store maximal value to signal level
-           //if (SPKI < fxI)
                SPKI = fxI = MedianCeil(fxI,  npkimax, nmed);
           }
 
@@ -471,13 +482,7 @@ unsigned long iStop;
 	   this routine waits until two sucsesive R-Peaks have been
            detected.
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void Phase2(unsigned long iStop)
-#endif
-#ifndef ANSI_C
-void Phase2(iStop)
-unsigned long iStop;
-#endif
 {
 RRMsgForm	RRRes;
 
@@ -575,9 +580,6 @@ RRMsgForm	RRRes;
 
 				// output of the result
 				PutRRRes(RRRes);
-#ifdef DEBUG
-				 mexPrintf("found* %ld\n", RRRes.iNr);
-#endif
 			} else {
 				 LocMaxF  = xLocMaxF;
 				 LocMaxI  = xLocMaxI;
@@ -608,13 +610,7 @@ RRMsgForm	RRRes;
 /*--------------------------------------------------------------------
 					 continous detection
 --------------------------------------------------------------------*/
-#ifdef ANSI_C
 void ContDetect(unsigned long iStop)
-#endif
-#ifndef ANSI_C
-void ContDetect(iStop)
-unsigned long iStop;
-#endif
 {
 RRMsgForm	RRRes;
  iLastOut=iNrSample;
@@ -779,58 +775,32 @@ RRMsgForm	RRRes;
 
 --------------------------------------------------------------------*/
 
-#ifdef ANSI_C
 void	QRSDet(unsigned long iStart, unsigned long iStop)
-#endif
-#ifndef ANSI_C
-void	QRSDet(iStart, iStop)
-unsigned long iStart;
-unsigned long iStop;
-#endif
 {
 unsigned long	i;
 
-   {
 	// fill the buffers of filter and energy function
-
     iNrSample = iStart;
 	for (i = 0; i<= TOTALDELAY; i++) OneStep();
    	InitPhase1();
 
-
-     /* Learnphase 1 */
     // Learnphase 1
 	Phase1(iStop);
 
 	// Learnphase 2
 	ifound  = 0;
 	iRRPeak = iNrSample;
-#undef DEBUG
-#ifdef DEBUG
-   	mexPrintf("ThresI1 %g\n", ThresholdI1);
-    mexPrintf("ThresI2 %g\n", ThresholdI2);
-   	mexPrintf("ThresF1 %g\n", ThresholdF1);
-    mexPrintf("ThresF2 %g\n", ThresholdF2);
-    mexPrintf("NPKI %g\n", NPKI);
-    mexPrintf("NPKF %g\n", NPKF);
-    mexPrintf("SPKI %g\n", SPKI);
-    mexPrintf("SPKF %g\n", SPKF);
-#endif
+
 	Phase2(iStop);
 
 	RRAverage1= RRAverage2 = distance;
-
-#ifdef DEBUG
-	mexPrintf("distance =%ld", distance);
-#endif
 
 	for (i=0; i<8; i++)  LastRR[i]=LastRROk[i] = distance;
 	countRRAverage1 = 0;
 	UpdateRRLimit();
 
-    // Detectionphase /
+    // Detectionphase
 	ContDetect(iStop);
-   }
 }
 
 
